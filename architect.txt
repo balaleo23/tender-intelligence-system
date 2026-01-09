@@ -1,0 +1,56 @@
+tender-intelligence-system/
+│
+├── ingestion_engine/               # 🚀 Core pipeline (this task)
+│   ├── scraper/                    # Browser automation
+│   │   ├── base.py                 # Abstract scraper contract
+│   │   ├── eprocure_scraper.py     # eprocure.gov.in logic
+│   │   ├── captcha_solver.py       # 2Captcha / OCR logic
+│   │   └── selectors.py            # CSS/XPath selectors (isolated!)
+│   │
+│   ├── processors/
+│   │   ├── pdf_downloader.py       # PDF fetch & storage
+│   │   ├── pdf_parser.py           # Text extraction (PyPDF2/unstructured)
+│   │   ├── chunker.py               # Token-based chunking
+│   │   └── embedder.py              # OpenAI embeddings
+│   │
+│   ├── storage/
+│   │   ├── postgres.py             # Tender metadata DB
+│   │   ├── vector_store.py         # Vector DB interface
+│   │   └── models.py               # SQLAlchemy models
+│   │
+│   ├── scheduler/
+│   │   ├── cron.py                 # APScheduler / Celery beat
+│   │   └── tasks.py                # Ingestion jobs
+│   │
+│   ├── utils/
+│   │   ├── logger.py               # Central logging
+│   │   ├── rate_limiter.py         # Exponential backoff
+│   │   ├── retry.py                # Retry policies
+│   │   └── file_manager.py
+│   │
+│   ├── config/
+│   │   ├── settings.py             # Env-based config
+│   │   └── constants.py
+│   │
+│   ├── main.py                     # Entry point
+│   └── __init__.py
+│
+├── agentic_rag/                    # 🔮 Future phase (keep separate)
+│
+├── scripts/
+│   ├── bootstrap_db.py
+│   └── run_scraper_once.py
+│
+├── tests/
+│   ├── scraper/
+│   ├── processors/
+│   └── storage/
+│
+├── .env.example
+├── docker-compose.yml
+├── pyproject.toml
+├── README.md
+└── .github/
+    ├── workflows/
+    │   └── ci.yml
+    └── CODEOWNERS
