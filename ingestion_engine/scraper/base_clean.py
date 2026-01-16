@@ -22,6 +22,10 @@ class Scrapper:
         self.page = None
    
     def open_load_content(self) -> Page:
+        """
+        Help to initialise the playwright for scrapping
+
+        """
         self.p = sync_playwright().start()
         self.browser = self.p.chromium.launch(headless=False)
         self.context = self.browser.new_context()
@@ -36,6 +40,11 @@ class Scrapper:
         return self.page
 
     def extract_rows(self, page: Page):
+        """
+        Trying to scrape the table from the page
+
+        """
+
         page_number = 1
 
         while True:
@@ -68,6 +77,12 @@ class Scrapper:
            page_number += 1
 
     def process_rows(self, rows: Locator):
+        """
+        Help to process the rows of the table
+
+        Args:
+            rows: Playrwright object which is used to locate the rows content
+        """
 
         headers = []
         if rows.count() == 0:
@@ -110,13 +125,13 @@ class Scrapper:
                     new_page.goto(full_url, wait_until="domcontentloaded")
 
                     locators = {
-                       'DirectLink_8': '//*[@id="DirectLink_8"]',
-                     'DirectLink_7'  : '//*[@id="DirectLink_7"]'
+                    'DirectLink_8': '//*[@id="DirectLink_8"]',
+                    'DirectLink_7'  : '//*[@id="DirectLink_7"]'
                     }
 
                     download_link_cnt = None
                     selected = None
-                    captchsolved= False
+                    #captchsolved= False
 
                     for key,  xpath in locators.items():
                         locator = new_page.locator(xpath)
@@ -162,6 +177,10 @@ class Scrapper:
                 self.data.append(row_data)
 
     def form_json(self):
+        """
+        Help to form the json data
+        """
+
         timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         filename = f"Tender_data_{timestamp}.json"
 
@@ -170,6 +189,10 @@ class Scrapper:
         logger.info(f"✅ Data saved to {filename}")
 
     def close(self):
+        """
+        Close the browser after the sucessful completion of the tasks
+
+        """
         if self.browser:
             self.browser.close()
         if self.p:
