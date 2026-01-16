@@ -6,6 +6,17 @@ import captcha_solver
 from urllib.parse import urljoin, urlparse, parse_qs, urlencode
 from PIL import Image
 from pathlib import Path
+import time
+
+import sys
+import os
+
+# Add the parent directory (my_project) to Python path
+parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, parent_dir)
+
+from utils.file_manager_dir import tender_get_storage_dir
+from scraper.eprocure_scraper import download_content
 import io
 # Logging
 logging.basicConfig(level=logging.INFO)
@@ -104,7 +115,17 @@ class Scrapper:
                 # tender link open
                 cell_value = cells.nth(col_index).inner_text().strip()
                 row_data[headers[col_index]] = cell_value
+
+                if col_index == 1:
+                    e_published_Date = cells.nth(col_index).inner_text().strip()
+                    e_published_Date_converted = datetime.strptime(e_published_Date, "%d-%b-%Y %I:%M %p")
+                    print(f"e_published_Date : {e_published_Date_converted}")
                 
+
+                if col_index == 4: 
+                    download_content(cells, self.page, e_published_Date_converted)
+
+                """
                 if col_index == 4:
                    
                     title_text = cells.nth(4).inner_text().strip()
@@ -162,17 +183,21 @@ class Scrapper:
                                 with new_page.expect_download() as download_info:
                                     download_link_cnt.click()
                                 download = download_info.value
-                                download_dir = Path("downloads")
-                                download_dir.mkdir(parents=True, exist_ok=True)
-                                temp_path = download.path()
-                                print(temp_path)
+                                download_dir_new = tender_get_storage_dir(clean_text_new, e_published_Date_converted)
+                                # print("download_path", download_dir_new) 
+                                # download_dir = Path("downloads")
+                                # download_dir.mkdir(parents=True, exist_ok=True)
+                                # temp_path = download.path()
+                                # print(temp_path)
                                 custom_name = f"{clean_text_new}_{download.suggested_filename}"
-                                download.save_as(download_dir/custom_name)
+                                download.save_as(download_dir_new/custom_name)
+                                time.sleep(1)
 
                     page.wait_for_timeout(2000)
                     new_page.close()
                     
-            
+                """
+                
             if row_data:
                 self.data.append(row_data)
 
@@ -184,7 +209,12 @@ class Scrapper:
         timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         filename = f"Tender_data_{timestamp}.json"
 
-        with open(filename, "w", encoding="utf-8") as f:
+        output_dir = "meta_data"
+        os.makedirs(output_dir, exist_ok=True)
+
+        filepath = os.path.join(output_dir, filename)
+
+        with open(filepath, "w", encoding="utf-8") as f:
             json.dump(self.data, f, indent=2, ensure_ascii=False)
         logger.info(f"✅ Data saved to {filename}")
 
