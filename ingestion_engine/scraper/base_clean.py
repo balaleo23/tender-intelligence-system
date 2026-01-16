@@ -2,7 +2,11 @@ import json
 from datetime import datetime
 import logging
 from playwright.sync_api import sync_playwright, Page, Locator
+import captcha_solver
 from urllib.parse import urljoin, urlparse, parse_qs, urlencode
+from PIL import Image
+from pathlib import Path
+import io
 # Logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -16,8 +20,7 @@ class Scrapper:
         self.p = None
         self.browser = None
         self.page = None
-
-    
+   
     def open_load_content(self) -> Page:
         self.p = sync_playwright().start()
         self.browser = self.p.chromium.launch(headless=False)
@@ -81,27 +84,24 @@ class Scrapper:
             cells_count = cells.count()
 
             row_data = {}
-            # for col_index  in range(min(cells_count), len(headers)):
-            #     row_data[headers[col_index]] = cells.nth(col_index).inner_text().strip()
+          
             for col_index in range(min(cells_count,len(headers))):
                 # tender link open
                 cell_value = cells.nth(col_index).inner_text().strip()
                 row_data[headers[col_index]] = cell_value
                 
                 if col_index == 4:
-                    # page.get_by_text(cell_value)
+                   
                     title_text = cells.nth(4).inner_text().strip()
                     # clean_text = title_text.split("]")[0].replace("[", "").strip()
+                    clean_text_new = title_text.split("[")[-1].replace("]", "").strip()
 
-                    # page.get_by_text(clean_text).click()
-                    # # page.get_by_role("link", name=clean_text, exact=True).click()
-                    # page.wait_for_load_state("domcontentloaded")
+
 
                     title_cell = cells.nth(4)
                     tender_href = title_cell.locator("a").get_attribute("href")
 
-                    # print(f"tender_href : {tender_href}")
-                    # print(f"page_Url : {self.page.url}")
+ 
 
                     full_url = urljoin(self.page.url, tender_href)
                     print(full_url)
@@ -109,20 +109,53 @@ class Scrapper:
                     new_page = self.page.context.new_page()
                     new_page.goto(full_url, wait_until="domcontentloaded")
 
-                    download_link_cnt = new_page.locator('//*[@id="DirectLink_8"]')
-                    # download_link_cnt.click()
-                    
+                    locators = {
+                       'DirectLink_8': '//*[@id="DirectLink_8"]',
+                     'DirectLink_7'  : '//*[@id="DirectLink_7"]'
+                    }
 
-                    print(download_link_cnt)
-                    # need to handle the captch logic and saving logic for the same
+                    download_link_cnt = None
+                    selected = None
+                    captchsolved= False
 
-                    # print("Tender URL:", tender_href)
-                    # page.goto(tender_href, wait_until="domcontentloaded")
-                    # page.wait_for_timeout(2000)
-                    #scraping_logic here
+                    for key,  xpath in locators.items():
+                        locator = new_page.locator(xpath)
+                        if locator.count() > 0:
+                            download_link_cnt = locator
+                            selected = key
+                            break
 
-                    # page.go_back(wait_until="domcontentloaded")
+
+
+                    print("download Link", download_link_cnt)
+                    download_href = download_link_cnt.get_attribute('href')
+                    if download_href:
+                        print(f"Link href: {download_href}")
+                        full_url_download = urljoin(self.page.url, download_href)
+                        print(f"Full Url download{full_url_download}")
+                        if selected == 'DirectLink_8':
+                            download_page = self.page.context.new_page()
+                            download_page.goto(full_url_download, wait_until="domcontentloaded")
+                            download_page.wait_for_selector('//*[@id="captchaImage"]', state= "hidden" ,timeout=30000)
+                            download_page.wait_for_timeout(30000)
+                            
+                            download_link_cnt.click()
+                            download_page.close()
+
+                        if selected == 'DirectLink_7':
+                                # download_page.wait_for_timeout(3500)
+                                with new_page.expect_download() as download_info:
+                                    download_link_cnt.click()
+                                download = download_info.value
+                                download_dir = Path("downloads")
+                                download_dir.mkdir(parents=True, exist_ok=True)
+                                temp_path = download.path()
+                                print(temp_path)
+                                custom_name = f"{clean_text_new}_{download.suggested_filename}"
+                                download.save_as(download_dir/custom_name)
+
                     page.wait_for_timeout(2000)
+                    new_page.close()
                     
             
             if row_data:
