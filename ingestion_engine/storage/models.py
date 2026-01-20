@@ -57,7 +57,28 @@ class TenderDocument(Base):
     id = Column(Integer, primary_key=True)
     tender_id = Column(Integer, ForeignKey("tenders.id"), nullable=False)
 
-    document_name = Column(String(255))
+    file_name = Column(String(255), nullable=False)
+    file_type = Column(String(50), nullable=False)
+    file_size = Column(Integer, nullable=False)
+
+    storage_path = Column(Text, nullable=False)
+    checksum = Column(String(64), nullable=False)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    tender = relationship("Tender", backref="documents")
+
+
+# class TenderDocument(Base):
+    __tablename__ = "tender_documents"
+
+    id = Column(Integer, primary_key=True)
+    tender_id = Column(Integer, ForeignKey("tenders.id"), nullable=False)
+    file_path = Column(String)
+    checksum = Column(String) 
+    file_name = Column(String)
+    file_type = Column(String)
+    file_size = Column(String)
     document_url = Column(Text)
     local_path = Column(Text)
 

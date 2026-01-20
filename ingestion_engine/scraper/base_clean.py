@@ -2,7 +2,7 @@ import json
 from datetime import datetime
 import logging
 from playwright.sync_api import sync_playwright, Page, Locator
-import captcha_solver
+from ingestion_engine.scraper import captcha_solver, captch_cnn_solver 
 from urllib.parse import urljoin, urlparse, parse_qs, urlencode
 from PIL import Image
 from pathlib import Path
@@ -11,12 +11,12 @@ import time
 import sys
 import os
 
-# Add the parent directory (my_project) to Python path
-parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, parent_dir)
+# # Add the parent directory (my_project) to Python path
+# parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# sys.path.insert(0, parent_dir)
 
-from utils.file_manager_dir import tender_get_storage_dir
-from scraper.eprocure_scraper import download_content
+from ingestion_engine.utils.file_manager_dir import tender_get_storage_dir
+from ingestion_engine.scraper.eprocure_scraper import download_content
 import io
 # Logging
 logging.basicConfig(level=logging.INFO)
@@ -28,6 +28,7 @@ class Scrapper:
 
     def __init__(self):
         self.data = []
+        self.download_data = []
         self.p = None
         self.browser = None
         self.page = None
@@ -123,7 +124,8 @@ class Scrapper:
                 
 
                 if col_index == 4: 
-                    download_content(cells, self.page, e_published_Date_converted)
+                  filedata =  download_content(cells, self.page, e_published_Date_converted)
+
 
                 """
                 if col_index == 4:
@@ -201,6 +203,15 @@ class Scrapper:
             if row_data:
                 self.data.append(row_data)
 
+            # if self.download_data:
+            #     print(self.download_data)
+            
+            if filedata not in self.download_data :
+            #    breakpoint()
+               print(filedata) 
+               self.download_data.append(filedata)
+        
+
     def form_json(self):
         """
         Help to form the json data
@@ -208,11 +219,17 @@ class Scrapper:
 
         timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         filename = f"Tender_data_{timestamp}.json"
+        filename_download = f"Tenders_filepath_{timestamp}.json"
 
         output_dir = "meta_data"
         os.makedirs(output_dir, exist_ok=True)
 
         filepath = os.path.join(output_dir, filename)
+        filename_download_path = os.path.join(output_dir, filename_download)
+
+        with open(filename_download_path,"w", encoding= "utf-8") as f1:
+            json.dump(self.download_data,f1, indent=2, ensure_ascii=False )
+        logger.info(f"✅ Data saved to {filename_download}")    
 
         with open(filepath, "w", encoding="utf-8") as f:
             json.dump(self.data, f, indent=2, ensure_ascii=False)

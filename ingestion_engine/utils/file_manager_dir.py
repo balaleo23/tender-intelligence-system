@@ -1,5 +1,6 @@
 from pathlib import Path
 from datetime import datetime
+from ingestion_engine.storage.services import document_service
 
 Base_Data_Dir = Path("data/tenders")
 
@@ -15,5 +16,5 @@ def tender_get_storage_dir(tender_uid : str, published_date : datetime) -> Path 
 
                 path = Base_Data_Dir /str(year) / month / tender_uid
                 path.mkdir(parents=True, exist_ok=True)
-
+                
                 return path

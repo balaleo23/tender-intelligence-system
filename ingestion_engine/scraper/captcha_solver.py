@@ -6,7 +6,7 @@ from playwright.sync_api import sync_playwright
 import re
 import io
 import easyocr
-import captch_cnn_solver
+from ingestion_engine.scraper import captch_cnn_solver, captcha_solver
 
 
 
