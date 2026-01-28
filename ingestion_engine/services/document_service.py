@@ -3,8 +3,48 @@ import hashlib
 from sqlalchemy.orm import Session
 from ingestion_engine.storage.models import TenderDocument
 from pathlib import Path
+from pathlib import Path
+from PyPDF2 import PdfReader
+from pdf2image import convert_from_path
+import pytesseract
 
 class DocumentService:
+
+
+    @staticmethod
+    def extract_text(file_path: Path) -> str:
+        
+        if file_path.suffix.lower() == ".pdf":
+            return DocumentService._extract_pdf(file_path)
+        return ""
+        
+    
+    @staticmethod
+    def _extract_pdf(file_path: Path) -> str:
+        reader = PdfReader(str(file_path))
+        text = ""
+
+        for page in reader.pages:
+            page_text = page.extract_text()
+            if page_text:
+                text += page_text + "\n"
+
+        # fallback to OCR
+        if len(text.strip()) < 100:
+            text = DocumentService._extract_pdf_ocr(file_path)
+
+        return text
+    
+    @staticmethod
+    def _extract_pdf_ocr(file_path: Path) -> str:
+        images = convert_from_path(file_path ,dpi=300, poppler_path=r"C:\poppler\poppler-25.12.0\Library\bin")
+        ocr_text = ""
+
+        for img in images:
+            pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+            ocr_text += pytesseract.image_to_string(img, lang="eng",  config="--psm 6") + "\n"
+
+        return ocr_text
 
     @staticmethod
     def calculate_checksum(file_path: str) -> str:
@@ -72,7 +112,7 @@ class DocumentService:
             storage_path=str(file_path),
             checksum=checksum,
         )
-
+        
         session.add(document)
         session.flush()
         return document

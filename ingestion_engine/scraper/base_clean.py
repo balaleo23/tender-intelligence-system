@@ -15,7 +15,7 @@ import os
 # parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # sys.path.insert(0, parent_dir)
 
-from ingestion_engine.utils.file_manager_dir import tender_get_storage_dir
+# from ingestion_engine.utils.file_manager_dir import TenderStorageManager
 from ingestion_engine.scraper.eprocure_scraper import download_content
 import io
 # Logging
@@ -38,18 +38,48 @@ class Scrapper:
         Help to initialise the playwright for scrapping
 
         """
-        self.p = sync_playwright().start()
-        self.browser = self.p.chromium.launch(headless=False)
-        self.context = self.browser.new_context()
-        self.page = self.context.new_page() 
+        try:
+            self.p = sync_playwright().start()
+            self.browser = self.p.chromium.launch(headless=False)
+            self.context = self.browser.new_context()
+            # self.context = self.browser.new_context(user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
+            # viewport={'width': 1920, 'height': 1080}, accept_downloads=True)
+            self.page = self.context.new_page() 
+            self.page.set_default_navigation_timeout(90000)
+            # 1. Navigate with retry logic
+            response = self.page.goto(URL, wait_until="load", timeout=60000)
 
-        self.page.goto(URL, wait_until="domcontentloaded", timeout=60000)
-        self.page.wait_for_timeout(3000)
-        self.page.get_by_text("Closing within 14 days").click()
+            if not response or response.status >= 400:
+                logger.error(f"Failed to load page: {response.status if response else 'No Response'}")
+                
+            # 2. Instead of a hard sleep, wait for the button to be ready
+            button = self.page.get_by_text("Closing within 14 days")
+            button.wait_for(state="visible", timeout=10000)
+            button.click()
 
-        logger.info("Page loaded successfully")
+            # 3. Wait for the table/results to actually load after the click
+            self.page.wait_for_load_state("networkidle")
 
-        return self.page
+            logger.info("Page loaded and filtered successfully")
+            return self.page
+
+        except Exception as e:
+            logger.error(f"Initialization failed: {e}")
+            self.cleanup() # Ensure you close the browser on failure
+            raise
+    
+    def cleanup(self):
+        """Call this to prevent memory leaks"""
+        if hasattr(self, 'browser'): self.browser.close()
+        if hasattr(self, 'p'): self.p.stop()
+        # self.page.goto(URL, wait_until="domcontentloaded", timeout=60000)
+        # self.page.wait_for_timeout(3000)
+        
+        # self.page.get_by_text("Closing within 14 days").click()
+
+        # logger.info("Page loaded successfully")
+
+        # return self.page
 
     def extract_rows(self, page: Page):
         """
@@ -64,7 +94,7 @@ class Scrapper:
 
            tender_table = page.locator('//*[@id="table"]')
 
-           if tender_table is None or page_number == 3: # sample for ten pages for demo
+           if tender_table is None or page_number == 5: # sample for ten pages for demo
                break
                
            page.wait_for_timeout(2000)

@@ -1,4 +1,7 @@
-def chunk_text(text: str, size=800, overlap=100) -> list[str]:
+class ChunkingService:
+
+    @staticmethod
+    def chunk_text(text: str, size=800, overlap=100) -> list[str]:
         words = text.split()
         chunks = []
 

@@ -4,7 +4,7 @@ from ingestion_engine.storage.models import Tender
 import re
 from datetime import datetime
 
-from ingestion_engine.storage.services.organization_service import OrganizationService
+from ingestion_engine.services.organization_service import OrganizationService
 
 class TenderService:
     """
