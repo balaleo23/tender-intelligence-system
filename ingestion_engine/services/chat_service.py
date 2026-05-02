@@ -1,42 +1,43 @@
-import requests
+﻿import requests
+
+from ingestion_engine.config import settings
+from ingestion_engine.utils.logger import get_logger
+
+logger = get_logger(__name__)
+
 
 class OllamaGenerateService:
-    def __init__(self, model="llama3"):
-        self.url = "http://localhost:11434/api/generate"
-        self.model = model
+
+    def __init__(self, model: str = None):
+        self.model = model or settings.ollama_model
+        self.url = f"{settings.ollama_base_url}/api/generate"
 
     def ask(self, prompt: str) -> str:
-        payload = {
-            "model": self.model,
-            "prompt": prompt,
-            "stream": False
-        }
-
-        response = requests.post(self.url, json=payload, timeout=300)
+        response = requests.post(
+            self.url,
+            json={"model": self.model, "prompt": prompt, "stream": False},
+            timeout=300,
+        )
         response.raise_for_status()
-
         return response.json()["response"]
 
 
 class OllamaChatService:
-    """
-    Local LLM using Ollama (free, no API key).
-    """
 
-    def __init__(self, model: str = "llama3"):
-        self.model = model
-        self.url = "http://localhost:11434/api/chat"
+    def __init__(self, model: str = None):
+        self.model = model or settings.ollama_model
+        self.url = f"{settings.ollama_base_url}/api/chat"
 
     def ask(self, prompt: str) -> str:
         response = requests.post(
             self.url,
             json={
                 "model": self.model,
-                "prompt": prompt,
-                "stream": False
+                "messages": [{"role": "user", "content": prompt}],
+                "stream": False,
             },
-            timeout=300
+            timeout=300,
         )
         response.raise_for_status()
-        print(r"ollamachat is getting generated {response.raise_for_status()}")
-        return response.json()["response"]
+        logger.info("Ollama response generated")
+        return response.json()["message"]["content"]

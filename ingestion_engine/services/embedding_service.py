@@ -2,12 +2,15 @@
 
 # client = OpenAI()
 from sentence_transformers import SentenceTransformer
+import torch
 
 
 class EmbeddingService:
 
         def __init__(self):
-            self.model = SentenceTransformer("BAAI/bge-small-en-v1.5")
+            device = "cuda" if torch.cuda.is_available() else "cpu"
+
+            self.model = SentenceTransformer("BAAI/bge-small-en-v1.5" , device=device)
 
         def embed_documents(self, docs: list[str]) -> list[list[float]]:
             docs = [f"Represent this document for retrieval: {d}" for d in docs]
@@ -19,6 +22,8 @@ class EmbeddingService:
             return embeddings.tolist()
 
         def embed_query(self, query: str) -> list[float]:
+            if not query:
+                return []
             query = f"Represent this query for retrieval: {query}"
             embedding = self.model.encode(
                 query,

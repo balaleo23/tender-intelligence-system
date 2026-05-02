@@ -1,35 +1,22 @@
+﻿from contextlib import contextmanager
+
 from sqlalchemy import create_engine
-from .models import Base
-import os
-from dotenv import load_dotenv
-from contextlib import contextmanager
 from sqlalchemy.orm import sessionmaker
 
+from ingestion_engine.config import settings
+from ingestion_engine.storage.models import Base
 
-load_dotenv()
+engine = create_engine(str(settings.postgres_url))
 
-# engine = create_engine(
-#     "postgresql+psycopg2://tender_user:tender_pass@localhost:5432/tender_db"
-# )
-engine = create_engine(os.getenv("POSTGRES_URL"))
-
-with engine.connect() as conn:
-    print("Connected to Postgres successfully!")
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 def init_db():
     Base.metadata.create_all(bind=engine)
 
 
-SessionLocal = sessionmaker(
-    autocommit=False,
-    autoflush=False,
-    bind=engine
-)
-# def init_db():
-#     Base.metadata.create_all(bind=engine)
-
 init_db()
+
 
 @contextmanager
 def get_session():

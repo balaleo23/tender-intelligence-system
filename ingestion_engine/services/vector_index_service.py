@@ -1,40 +1,32 @@
+﻿import uuid
+
 from qdrant_client import QdrantClient
-from qdrant_client.models import PointStruct
-import uuid
-from qdrant_client.models import VectorParams, Distance
+from qdrant_client.models import Distance, PointStruct, VectorParams
+
+from ingestion_engine.config import settings
+
 
 class VectorIndexService:
 
-    def __init__(self):
-        self.client = QdrantClient(host="localhost", port=6333)
-        self.collection = "tenders"
+    def __init__(self, client: QdrantClient):
+        self.client = client
+        self.collection = settings.collection_name
         self._ensure_collection()
 
     def _ensure_collection(self):
-        collections = [c.name for c in self.client.get_collections().collections]
-
-        if self.collection not in collections:
+        existing = [c.name for c in self.client.get_collections().collections]
+        if self.collection not in existing:
             self.client.create_collection(
                 collection_name=self.collection,
                 vectors_config=VectorParams(
-                    size=384,
-                    distance=Distance.COSINE
-                )
+                    size=settings.embedding_dim,
+                    distance=Distance.COSINE,
+                ),
             )
 
-    def upsert(self, vectors, metadatas):
-        points = []
-
-        for vector, meta in zip(vectors, metadatas):
-            points.append(
-                PointStruct(
-                    id=str(uuid.uuid4()), 
-                    vector=vector,
-                    payload=meta
-                )
-            )
-
-        self.client.upsert(
-            collection_name=self.collection,
-            points=points
-        )
+    def upsert(self, vectors: list, metadatas: list[dict]) -> None:
+        points = [
+            PointStruct(id=str(uuid.uuid4()), vector=vector, payload=meta)
+            for vector, meta in zip(vectors, metadatas)
+        ]
+        self.client.upsert(collection_name=self.collection, points=points)
