@@ -25,27 +25,43 @@ class VectorIndexService:
                 ),
             )
 
-    def _already_indexed(self, document: str, chunk_index: int) -> bool:
-        chunk_id = hashlib.md5(f"{document}:{chunk_index}".encode()).hexdigest()
-        results = self.client.scroll(
-            collection_name=self.collection,
-            scroll_filter=Filter(
-                must=[FieldCondition(key="chunk_id", match=MatchValue(value=chunk_id))]
-            ),
-            limit=1,
-        )
-        return len(results[0]) > 0
+    def _indexed_chunk_ids(self, document: str) -> set[str]:
+        """Fetch all chunk_ids already stored for a document in one scroll."""
+        known = set()
+        offset = None
+        while True:
+            batch, offset = self.client.scroll(
+                collection_name=self.collection,
+                scroll_filter=Filter(
+                    must=[FieldCondition(key="document", match=MatchValue(value=document))]
+                ),
+                with_payload=["chunk_id"],
+                limit=100,
+                offset=offset,
+            )
+            for point in batch:
+                cid = point.payload.get("chunk_id")
+                if cid:
+                    known.add(cid)
+            if offset is None:
+                break
+        return known
 
     def upsert(self, vectors: list, metadatas: list[dict]) -> None:
+        if not vectors:
+            return
+
+        # Batch-fetch all already-indexed chunk_ids for this document (1 Qdrant call)
+        document = metadatas[0].get("document", "") if metadatas else ""
+        known_ids = self._indexed_chunk_ids(document) if document else set()
+
         points = []
         for vector, meta in zip(vectors, metadatas):
-            document = meta.get("document", "")
-            chunk_index = meta.get("chunk_index", 0)
-            chunk_id = hashlib.md5(f"{document}:{chunk_index}".encode()).hexdigest()
-
-            if self._already_indexed(document, chunk_index):
+            chunk_id = hashlib.md5(
+                f"{meta.get('document', '')}:{meta.get('chunk_index', 0)}".encode()
+            ).hexdigest()
+            if chunk_id in known_ids:
                 continue
-
             points.append(
                 PointStruct(
                     id=str(uuid.uuid4()),

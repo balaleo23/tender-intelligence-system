@@ -31,10 +31,11 @@ class Settings(BaseSettings):
     embedding_model : str = 'BAAI/bge-small-en-v1.5'
     embedding_dim : int = 384
     collection_name : str = 'tenders'
-    chunk_size : int = 800
-    chunk_overlap : int = 100
-    top_k : int = 5
-    log_level : str = "INFO"      
+    chunk_size : int = 400
+    chunk_overlap : int = 50
+    top_k : int = 8
+    score_threshold : float = 0.4
+    log_level : str = "INFO"
 
 
 
