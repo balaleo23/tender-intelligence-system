@@ -26,6 +26,10 @@ Embedding Service  (BAAI/bge-small-en-v1.5, 384-dim)
 Qdrant Vector Store  (COSINE distance)
     ↓
 Ollama RAG Chatbot  →  Structured response: answer + citations + confidence
+    ↓
+FastAPI REST API  →  /query, /ingest, /tenders, /health
+    ↓
+Streamlit Frontend  →  Search, Ingest, Scrape pages
 ```
 
 ---
@@ -40,6 +44,8 @@ Ollama RAG Chatbot  →  Structured response: answer + citations + confidence
 | Embeddings | Sentence-Transformers (`BAAI/bge-small-en-v1.5`) |
 | Relational DB | PostgreSQL 15 + SQLAlchemy ORM |
 | LLM (local) | Ollama (Mistral / Llama 3) |
+| REST API | FastAPI + Uvicorn |
+| Frontend | Streamlit (multi-page) |
 | Infrastructure | Docker Compose |
 | Python | 3.10+ |
 
@@ -99,6 +105,11 @@ OLLAMA_MODEL=mistral
 # Windows only
 TESSERACT_CMD=C:\Program Files\Tesseract-OCR\tesseract.exe
 POPPLER_PATH=C:\poppler\poppler-25.12.0\Library\bin
+
+# Scraper browser mode
+# false (default) — opens a visible browser so you can solve CAPTCHAs manually
+# true            — headless mode for Docker / CI (no display)
+PLAYWRIGHT_HEADLESS=false
 ```
 
 ### Step 3 — Start infrastructure services
@@ -145,6 +156,8 @@ playwright install chromium
 python -m ingestion_engine.scraper.scraper_runner
 ```
 
+The browser opens in **visible mode** by default (`PLAYWRIGHT_HEADLESS=false`) so you can manually solve the CAPTCHA when the download page appears. Set `PLAYWRIGHT_HEADLESS=true` in `.env` when running inside Docker.
+
 Downloaded files land in `data/tenders/<year>/<month>/<tender_uid>/raw/`.
 Metadata JSONs are written to `meta_data/`.
 
@@ -165,6 +178,35 @@ What this does:
    - Splits text into 800-word overlapping chunks
    - Embeds each chunk with Sentence-Transformers
    - Upserts vectors into Qdrant with full metadata payload
+
+### Step 9 — Start the API
+
+```bash
+uvicorn ingestion_engine.api.app:app --reload --port 8000
+```
+
+Endpoints available at `http://localhost:8000`:
+
+| Endpoint | Method | Purpose |
+|---|---|---|
+| `/health` | GET | Service health check |
+| `/tenders` | GET | List all indexed tenders |
+| `/query` | POST | RAG search over tender documents |
+| `/ingest` | POST | Trigger ingestion for a tender UID |
+
+### Step 10 — Start the Streamlit frontend
+
+```bash
+streamlit run frontend/app.py
+```
+
+Opens at `http://localhost:8501` with three pages:
+
+| Page | Purpose |
+|---|---|
+| Search | RAG chatbot — ask questions over ingested tenders |
+| Ingest | Trigger document ingestion for a specific tender |
+| Scrape | Launch a new scrape run from the browser |
 
 ---
 
@@ -197,8 +239,18 @@ Response shape:
 ```
 tender-intelligence-system/
 ├── docker-compose.yml
+├── Dockerfile                           # FastAPI container
+├── Dockerfile.frontend                  # Streamlit container
 ├── pyproject.toml
 ├── .env.example
+├── frontend/                            # Streamlit multi-page app
+│   ├── app.py                           # Landing page / entry point
+│   ├── api_client.py                    # HTTP wrapper for the FastAPI backend
+│   ├── requirements.txt                 # Frontend-only deps (streamlit, requests)
+│   └── pages/
+│       ├── 1_search.py                  # RAG chatbot search page
+│       ├── 2_ingest.py                  # Trigger ingestion page
+│       └── 3_scrape.py                  # Launch scrape page
 ├── scripts/                             # Ops and diagnostic scripts (not part of module)
 │   ├── check_postgres.py
 │   ├── check_qdrant.py
@@ -266,6 +318,12 @@ Run `playwright install chromium`.
 
 **Qdrant collection not found**
 Collection is created automatically on first upsert. Ensure Qdrant is running first.
+
+**Frontend shows "Request timed out" on Search or Ingest**
+The default API client timeout is 5 minutes (`DEFAULT_TIMEOUT = 300s`). Ingestion has its own 30-minute budget (`INGEST_TIMEOUT = 1800s`). If you are processing a very large batch, the ingestion can exceed this — increase `INGEST_TIMEOUT` in `frontend/api_client.py`.
+
+**Scraper opens browser but CAPTCHA page appears**
+This is expected — solve the CAPTCHA manually in the browser window. The scraper waits up to 60 seconds for you to complete it before continuing. Set `PLAYWRIGHT_HEADLESS=false` in `.env` if the browser is not opening.
 
 ---
 

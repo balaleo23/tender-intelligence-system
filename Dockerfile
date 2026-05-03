@@ -3,8 +3,10 @@
 FROM python:3.11-slim
 
 # ── System dependencies ─────────────────────────────────────────────────────
-# These are OS-level libraries your Python packages need under the hood:
-#   curl         → used by healthchecks and Playwright install
+# API container only needs PDF processing tools — NO browser.
+# Scraper runs locally (headless=false) so humans can solve captchas.
+# Removing Playwright saves ~2.2GB and cuts build time from 10min → 2min.
+#   curl          → healthcheck probes
 #   poppler-utils → pdf2image needs this to convert PDFs to images
 #   tesseract-ocr → pytesseract OCR fallback for scanned PDFs
 #   libgl1        → opencv requires this OpenGL library
@@ -14,10 +16,8 @@ RUN apt-get update && apt-get install -y \
     tesseract-ocr \
     libgl1 \
     && rm -rf /var/lib/apt/lists/*
-# rm -rf cleans apt cache → keeps image size small
 
 # ── Working directory ────────────────────────────────────────────────────────
-# All subsequent commands run from /app inside the container
 WORKDIR /app
 
 # ── Dependency installation (layer cache optimisation) ───────────────────────
@@ -27,11 +27,6 @@ WORKDIR /app
 COPY pyproject.toml .
 RUN pip install --no-cache-dir .
 # --no-cache-dir → don't store pip's download cache inside the image (saves ~100MB)
-
-# ── Playwright browser installation ─────────────────────────────────────────
-# Playwright needs a real browser binary (Chromium) + its OS dependencies.
-# --with-deps installs all required Linux libraries automatically.
-RUN playwright install chromium --with-deps
 
 # ── Application code ─────────────────────────────────────────────────────────
 # Copy code AFTER pip install so code changes don't invalidate the pip cache.

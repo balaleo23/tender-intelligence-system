@@ -34,3 +34,12 @@ class TenderResponse(BaseModel):
 class IngestResponse(BaseModel):
     message: str
     tenders_processed: int
+
+
+class ScrapeStatusResponse(BaseModel):
+    state: str              # idle | running | done | failed
+    tenders_scraped: int
+    error: Optional[str]
+    started_at: Optional[str]
+    finished_at: Optional[str]
+    message: str

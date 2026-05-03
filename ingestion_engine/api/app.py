@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from qdrant_client import QdrantClient
 
-from ingestion_engine.api.routes import health, ingest, query, tenders
+from ingestion_engine.api.routes import health, ingest, query, scrape, tenders
 from ingestion_engine.config import settings
 from ingestion_engine.services.embedding_service import EmbeddingService
 from ingestion_engine.utils.logger import get_logger
@@ -35,6 +35,7 @@ def create_app() -> FastAPI:
     app.include_router(query.router)
     app.include_router(ingest.router)
     app.include_router(tenders.router)
+    app.include_router(scrape.router)
     return app
 
 

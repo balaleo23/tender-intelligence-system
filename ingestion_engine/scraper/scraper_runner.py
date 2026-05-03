@@ -38,7 +38,10 @@ class Scrapper:
     def open_load_content(self) -> Page:
         try:
             self.p = sync_playwright().start()
-            self.browser = self.p.chromium.launch(headless=False)
+            # headless=True required in Docker (no display available)
+            # Set PLAYWRIGHT_HEADLESS=false in .env to watch browser locally
+            headless = os.getenv("PLAYWRIGHT_HEADLESS", "false").lower() != "false"
+            self.browser = self.p.chromium.launch(headless=headless)
             self.context = self.browser.new_context()
             self.page = self.context.new_page()
             self.page.set_default_navigation_timeout(NAV_TIMEOUT_MS)
