@@ -149,10 +149,7 @@ class Scrapper:
         logger.info("Data saved to %s", filename)
 
     def close(self):
-        if self.browser:
-            self.browser.close()
-        if self.p:
-            self.p.stop()
+        self.cleanup()
 
 
 if __name__ == "__main__":

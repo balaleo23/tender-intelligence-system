@@ -4,17 +4,17 @@ from pathlib import Path
 from qdrant_client import QdrantClient
 
 from ingestion_engine.config import settings
+from ingestion_engine.document_ingestion_workflow import ingest_tender_documents
+from ingestion_engine.services.chunking_service import ChunkingService
+from ingestion_engine.services.document_service import DocumentService
+from ingestion_engine.services.embedding_service import EmbeddingService
+from ingestion_engine.services.tender_repository import TenderRepository
+from ingestion_engine.services.vector_index_service import VectorIndexService
+from ingestion_engine.storage.models import Tender
+from ingestion_engine.storage.postgres import get_session
 from ingestion_engine.utils.logger import get_logger
 
 logger = get_logger(__name__)
-from ingestion_engine.storage.postgres import get_session
-from ingestion_engine.storage.models import Tender
-from ingestion_engine.services.tender_repository import TenderRepository
-from ingestion_engine.services.document_service import DocumentService
-from ingestion_engine.services.chunking_service import ChunkingService
-from ingestion_engine.services.embedding_service import EmbeddingService
-from ingestion_engine.services.vector_index_service import VectorIndexService
-from ingestion_engine.document_ingestion_workflow import ingest_tender_documents
 
 
 def load_metadata(folder: Path) -> tuple[list, list]:

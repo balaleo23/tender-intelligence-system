@@ -7,6 +7,7 @@ from ingestion_engine.api.routes import health, ingest, query, tenders
 from ingestion_engine.config import settings
 from ingestion_engine.services.embedding_service import EmbeddingService
 from ingestion_engine.utils.logger import get_logger
+from ingestion_engine.storage.postgres import check_connection , init_db
 
 logger = get_logger(__name__)
 
@@ -16,6 +17,8 @@ async def lifespan(app: FastAPI):
     logger.info("Starting up — loading Qdrant client and embedding model")
     app.state.qdrant = QdrantClient(host=settings.qdrant_host, port=settings.qdrant_port)
     app.state.embedder = EmbeddingService()
+    check_connection()
+    init_db()
     logger.info("Startup complete")
     yield
     logger.info("Shutting down")

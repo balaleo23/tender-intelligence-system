@@ -1,0 +1,21 @@
+# Streamlit frontend — lightweight, no Playwright needed
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Separate requirements.txt for frontend (only needs streamlit + requests)
+# Keeps frontend image small — no sentence-transformers, no playwright, etc.
+COPY frontend/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy frontend code
+COPY frontend/ ./frontend/
+
+EXPOSE 8501
+
+# --server.address 0.0.0.0 → same reason as API: listen on all interfaces
+# --server.headless true   → disables browser auto-open (useless inside Docker)
+CMD ["streamlit", "run", "frontend/app.py", \
+     "--server.address", "0.0.0.0", \
+     "--server.port", "8501", \
+     "--server.headless", "true"]

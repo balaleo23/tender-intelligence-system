@@ -10,7 +10,7 @@ def get_logger(name: str) -> logging.Logger:
     if logger.handlers:
         return logger
 
-    logger.setLevel(settings.log_level.upper())
+    logger.setLevel(logging.DEBUG)  # capture all levels; handler filters what's shown
 
     handler = logging.StreamHandler(sys.stdout)
     handler.setLevel(settings.log_level.upper())

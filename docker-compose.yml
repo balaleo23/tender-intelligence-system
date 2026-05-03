@@ -1,6 +1,14 @@
 version: "3.9"
 
+# ── Shared environment ────────────────────────────────────────────────────────
+# x- prefix = YAML extension (ignored by Docker, used for reuse via &anchors)
+x-api-env: &api-env
+  env_file: .env.docker
+
 services:
+
+  # ── Infrastructure ────────────────────────────────────────────────────────
+
   postgres:
     image: postgres:15-alpine
     container_name: tender_postgres
@@ -38,8 +46,54 @@ services:
     ports:
       - "11434:11434"
     volumes:
-      - ollama_data:/root/.ollama
-    # To pull mistral after container starts: docker exec tender_ollama ollama pull mistral
+      - ollama_data:/root/.ollama   # FIX: was missing — model survives restarts
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:11434 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  # ── Application ───────────────────────────────────────────────────────────
+
+  api:
+    build:
+      context: .             # build from project root
+      dockerfile: Dockerfile # use our Dockerfile
+    container_name: tender_api
+    <<: *api-env             # inject .env.docker variables
+    ports:
+      - "8000:8000"
+    volumes:
+      # Mount data dirs so scraper output is visible on your laptop too
+      - ./data:/app/data
+      - ./meta_data:/app/meta_data
+    depends_on:
+      postgres:
+        condition: service_healthy   # wait until postgres passes healthcheck
+      qdrant:
+        condition: service_healthy   # wait until qdrant passes healthcheck
+      ollama:
+        condition: service_started   # ollama has no fast healthcheck, just wait for start
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: tender_frontend
+    <<: *api-env
+    ports:
+      - "8501:8501"
+    depends_on:
+      api:
+        condition: service_healthy   # wait until API is ready before starting UI
+    environment:
+      # Tell Streamlit where the API lives (service name, not localhost)
+      API_BASE_URL: http://api:8000
 
 volumes:
   postgres_data:

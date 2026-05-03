@@ -1,16 +1,14 @@
-# from openai import OpenAI
-
-# client = OpenAI()
-from sentence_transformers import SentenceTransformer
 import torch
+from sentence_transformers import SentenceTransformer
 
+from ingestion_engine.config import settings
 
 class EmbeddingService:
 
         def __init__(self):
             device = "cuda" if torch.cuda.is_available() else "cpu"
-
-            self.model = SentenceTransformer("BAAI/bge-small-en-v1.5" , device=device)
+            self.model = SentenceTransformer(settings.embedding_model, device= device)
+            # self.model = SentenceTransformer("BAAI/bge-small-en-v1.5" , device=device)
 
         def embed_documents(self, docs: list[str]) -> list[list[float]]:
             docs = [f"Represent this document for retrieval: {d}" for d in docs]
@@ -32,29 +30,3 @@ class EmbeddingService:
             )
             return embedding.tolist()
 
-# class EmbeddingService:
-
-#     def __init__(self):
-#         self.model = SentenceTransformer("BAAI/bge-small-en-v1.5")
-
-#     # @staticmethod
-#     def embed(self,chunks: list[str]) -> list[list[float]]:
-#         response = self.model.encode(
-#             chunks,
-#             normalize_embeddings=True,
-#             show_progress_bar=False
-#         )
-#         return response.tolist()
-    
-
-
-
-# class EmbeddingService:
-
-#     @staticmethod
-#     def embed(chunks: list[str]) -> list[list[float]]:
-#         response = client.embeddings.create(
-#             model="text-embedding-3-small",
-#             input=chunks
-#         )
-#         return [r.embedding for r in response.data]
