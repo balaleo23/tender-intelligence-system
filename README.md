@@ -19,7 +19,7 @@ ZIP Extraction  →  data/tenders/<year>/<month>/<tender_uid>/extracted/
     ↓
 PDF Text Extraction  (PyPDF2 + OCR fallback via Tesseract / EasyOCR)
     ↓
-Chunking Service  (800-word chunks, 100-word overlap)
+Chunking Service  (400-word chunks, 50-word overlap — tunable via eval)
     ↓
 Embedding Service  (BAAI/bge-small-en-v1.5, 384-dim)
     ↓
@@ -189,10 +189,12 @@ Endpoints available at `http://localhost:8000`:
 
 | Endpoint | Method | Purpose |
 |---|---|---|
-| `/health` | GET | Service health check |
+| `/health` | GET | Service health check (Postgres, Qdrant, Ollama) |
 | `/tenders` | GET | List all indexed tenders |
-| `/query` | POST | RAG search over tender documents |
-| `/ingest` | POST | Trigger ingestion for a tender UID |
+| `/query` | POST | RAG search — returns answer + citations + confidence |
+| `/ingest` | POST | Run ingestion pipeline from `meta_data/` folder |
+| `/scrape` | POST | Trigger scraper background task |
+| `/scrape/status` | GET | Poll scraper progress |
 
 ### Step 10 — Start the Streamlit frontend
 
@@ -324,6 +326,36 @@ The default API client timeout is 5 minutes (`DEFAULT_TIMEOUT = 300s`). Ingestio
 
 **Scraper opens browser but CAPTCHA page appears**
 This is expected — solve the CAPTCHA manually in the browser window. The scraper waits up to 60 seconds for you to complete it before continuing. Set `PLAYWRIGHT_HEADLESS=false` in `.env` if the browser is not opening.
+
+---
+
+## Retrieval Evaluation
+
+The project includes a retrieval eval framework to measure and improve RAG quality.
+
+### Metrics
+| Metric | What it measures |
+|--------|-----------------|
+| `hit_rate` | 1.0 if expected tender appears anywhere in top-k results |
+| `mrr` | Mean Reciprocal Rank — rewards results that rank the correct tender higher |
+| `latency_ms` | Time for embed_query + Qdrant search |
+
+### Run baseline eval
+```bash
+python scripts/eval_retrieval.py --out scripts/eval_baseline.json
+```
+
+### Tune chunk size
+```bash
+python scripts/tune_chunks.py
+```
+Tests a grid of `chunk_size × overlap × strategy (word/sentence)` combinations
+and prints a comparison table. Use results to update `config.py`.
+
+### Workflow
+```
+Scrape → Ingest → eval_baseline.json → tune_chunks.py → update config → re-ingest → eval_after.json
+```
 
 ---
 
