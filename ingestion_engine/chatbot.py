@@ -1,8 +1,6 @@
-﻿from qdrant_client import QdrantClient
 from ollama import chat, ChatResponse
 
 from ingestion_engine.config import settings
-from ingestion_engine.services.embedding_service import EmbeddingService
 from ingestion_engine.services.vector_search_service import VectorSearchService
 
 
@@ -22,16 +20,15 @@ def ask_chatbot_structured(question: str, searcher: VectorSearchService) -> dict
     for r in results:
         payload = r.payload
         context_blocks.append(
-            f"""
-            Tender ID: {payload["tender_uid"]}
-            Document: {payload.get("document", "")}
-            Text:
-            {payload["text"]}
-            """.strip()
+            f"Tender ID: {payload['tender_uid']}\n"
+            f"Organisation: {payload.get('organization', 'N/A')}\n"
+            f"Published: {payload.get('published_date', 'N/A')}\n"
+            f"Document: {payload.get('document', '')}\n"
+            f"Text:\n{payload['text']}"
         )
         citations.add(payload["tender_uid"])
 
-    context = "\n\n".join(context_blocks)
+    context = "\n\n---\n\n".join(context_blocks)
 
     messages = [
         {
@@ -39,6 +36,7 @@ def ask_chatbot_structured(question: str, searcher: VectorSearchService) -> dict
             "content": (
                 "You are a Tender Intelligence Assistant.\n"
                 "Answer ONLY using the provided context.\n"
+                "Include tender IDs, organisations, and dates in your answer when relevant.\n"
                 "If the answer is not present, say:\n"
                 "'Not found in the available tender documents.'"
             ),
@@ -54,10 +52,11 @@ def ask_chatbot_structured(question: str, searcher: VectorSearchService) -> dict
         messages=messages,
     )
 
-    confidence = min(1.0, sum(r.score for r in results) / len(results))
+    # Top result score — best chunk relevance is more meaningful than average
+    confidence = round(results[0].score, 2)
 
     return {
         "answer": response.message.content,
         "citations": list(citations),
-        "confidence": round(confidence, 2),
+        "confidence": confidence,
     }
