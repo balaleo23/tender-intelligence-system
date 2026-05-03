@@ -8,6 +8,38 @@ Usage:
     # Capture post-optimisation results
     python scripts/eval_retrieval.py --out scripts/eval_after.json
 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+HOW TO POPULATE THE GOLDEN DATASET (do this once):
+
+  Step 1 — Start infrastructure
+           docker-compose up -d postgres qdrant ollama
+
+  Step 2 — Scrape some real data
+           python scripts/run_scraper.py
+           (solve CAPTCHAs manually in the browser window)
+
+  Step 3 — Ingest into Postgres + Qdrant
+           curl -X POST http://localhost:8000/ingest
+           OR: Streamlit → Ingest page → Run Ingestion
+
+  Step 4 — Find real tender UIDs
+           docker exec -it tender_postgres psql -U tender_user -d tender_db
+           SELECT tender_uid, title FROM tenders LIMIT 20;
+
+  Step 5 — Match UIDs to your GOLDEN questions below
+           Replace None with a real tender_uid that you expect
+           to appear in the top-k results for that question.
+
+  Step 6 — Run baseline eval
+           python scripts/eval_retrieval.py --out scripts/eval_baseline.json
+
+  Step 7 — Tune chunk sizes
+           python scripts/tune_chunks.py
+
+  Step 8 — Update config.py with the best chunk_size + overlap from tune results
+           Then re-ingest and re-run eval to confirm improvement.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 GOLDEN DATASET — fill in real tender_uid values from your scraped data:
   Run this query in psql to find real UIDs:
       SELECT tender_uid, title FROM tenders LIMIT 20;
