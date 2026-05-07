@@ -1,0 +1,36 @@
+﻿[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "tender-intelligence-system"
+version = "0.1.0"
+description = "End-to-end tender ingestion and Agentic RAG system for Indian government portals"
+requires-python = ">=3.10"
+dependencies = [
+    "playwright>=1.40.0",
+    "PyPDF2>=3.0.0",
+    "pdf2image>=1.17.0",
+    "pytesseract>=0.3.10",
+    "easyocr>=1.7.0",
+    "Pillow>=10.0.0",
+    "opencv-python>=4.8.0",
+    "numpy>=1.24.0",
+    "sqlalchemy>=2.0.0",
+    "psycopg2-binary>=2.9.0",
+    "qdrant-client>=1.7.0",
+    "sentence-transformers>=2.2.0",
+    "ollama>=0.1.0",
+    "requests>=2.31.0",
+    "python-dotenv>=1.0.0",
+    "pydantic-settings>=2.0.0",
+    "fastapi>=0.104.0",
+    "uvicorn>=0.24.0",
+    "streamlit>=1.30.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+]

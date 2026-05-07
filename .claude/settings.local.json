@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(wc -l ingestion_engine/scraper/*.py ingestion_engine/storage/*.py ingestion_engine/utils/*.py ingestion_engine/main.py)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\Balam\\\\OneDrive\\\\Documents\\\\Data_Engineering\\\\Project_Agentic_AI\\\\tender-intelligence-system\" -Recurse -Force)",
+      "Bash(Select-Object FullName, Length)",
+      "Bash(Format-Table -AutoSize)",
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\Balam\\\\OneDrive\\\\Documents\\\\Data_Engineering\\\\Project_Agentic_AI\\\\tender-intelligence-system\" -Recurse -Force | Where-Object {$_.PSIsContainer -eq $false} | Select-Object FullName, Length | ConvertTo-Json)",
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\Balam\\\\OneDrive\\\\Documents\\\\Data_Engineering\\\\Project_Agentic_AI\\\\tender-intelligence-system\\\\ingestion_engine\" -Recurse -File | Where-Object { $_.FullName -notmatch \"__pycache__\" } | Select-Object -ExpandProperty FullName | ForEach-Object { $_.Replace\\(\"C:\\\\Users\\\\Balam\\\\OneDrive\\\\Documents\\\\Data_Engineering\\\\Project_Agentic_AI\\\\tender-intelligence-system\\\\\", \"\"\\) })",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\Balam\\\\OneDrive\\\\Documents\\\\Data_Engineering\\\\Project_Agentic_AI\\\\tender-intelligence-system\\\\ingestion_engine\" -Filter \"*.py\")",
+      "Bash(Select-Object Name)",
+      "Bash(pip install *)",
+      "Bash(.\\\\.venv\\\\Scripts\\\\python.exe -c \"from ingestion_engine.api.schemas import HealthResponse, QueryRequest, QueryResponse, TenderResponse, IngestResponse; print\\('schemas OK'\\)\")"
+    ]
+  }
+}

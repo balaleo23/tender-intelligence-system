@@ -6,6 +6,17 @@ __pycache__/
 # C extensions
 *.so
 
+# Created files and downloaded files
+data/*
+meta_data/*
+
+# Eval output — contains real tender UIDs, don't commit
+scripts/eval_*.json
+scripts/tune_results.json
+
+# Docker env — contains real credentials
+.env.docker
+
 # Distribution / packaging
 .Python
 build/
