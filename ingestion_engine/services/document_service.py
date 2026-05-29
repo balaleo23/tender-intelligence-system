@@ -1,7 +1,7 @@
 ﻿import hashlib
 from pathlib import Path
 
-from PyPDF2 import PdfReader
+import fitz  # PyMuPDF
 from pdf2image import convert_from_path
 from sqlalchemy.orm import Session
 import pytesseract
@@ -21,13 +21,13 @@ class DocumentService:
 
     @staticmethod
     def _extract_pdf(file_path: Path) -> str:
-        reader = PdfReader(str(file_path))
         text = ""
 
-        for page in reader.pages:
-            page_text = page.extract_text()
-            if page_text:
-                text += page_text + "\n"
+        with fitz.open(str(file_path)) as doc:
+            for page in doc:
+                page_text = page.get_text()
+                if page_text:
+                    text += page_text + "\n"
 
         if len(text.strip()) < MIN_TEXT_LENGTH:
             text = DocumentService._extract_pdf_ocr(file_path)

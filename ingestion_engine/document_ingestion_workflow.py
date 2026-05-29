@@ -44,6 +44,10 @@ def ingest_tender_documents(
                 if not file_path.is_file():
                     continue
 
+                if file_path.suffix.lower() in (".xls", ".xlsx", ".xlsm", ".xlsb"):
+                    logger.info("Skipping Excel file: %s", file_path.name)
+                    continue
+
                 text = DocumentService.extract_text(file_path)
 
                 if not text.strip():
