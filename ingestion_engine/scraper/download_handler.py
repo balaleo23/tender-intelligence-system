@@ -49,7 +49,7 @@ def download_content(cells: Locator, page: Page, e_published_Date_converted: dat
             selected = key
             break
 
-    logger.debug("Download link selected: %s", selected)
+    logger.info("Download link selected: %s", selected)
 
     if not download_link_cnt:
         logger.warning("No download link found for '%s' — skipping", clean_text_new)
@@ -70,25 +70,50 @@ def download_content(cells: Locator, page: Page, e_published_Date_converted: dat
         download_page = page.context.new_page()
         download_page.goto(full_url_download, wait_until="domcontentloaded")
         download_page.wait_for_selector('//*[@id="captchaImage"]', state="hidden", timeout=30000)
-        download_page.wait_for_timeout(30000)
-        download_link_cnt.click()
+        # download_page.wait_for_timeout(30000)
+        # download_link_cnt.wait_for(selector='//*[@id="DirectLink_7"]', state="hidden", timeout=30000)
+        # --- OLD (broken): click fired before expect_download, and a Page was
+        # --- passed to create_download which calls .click() with no selector ---
+        # target_element = download_page.wait_for_selector('//*[@id="DirectLink_7"]')
+        # download_page.click('//*[@id="DirectLink_7"]')
+        # logger.info(f"download_link_cnt: {download_page}")
+        # download = create_download(new_page, download_page)
+        # save_download_storage(e_published_Date_converted, clean_text_new, download)
+        # download_page.close()
+        # download_link_cnt.click()
+        # download_page.close()
+        # selected ="DirectLink_7"
+
+        # --- NEW: pass the download_page (where the download fires) and a
+        # --- locator, so create_download clicks inside expect_download() ---
+        download_page.wait_for_selector('//*[@id="DirectLink_7"]')
+        download_link = download_page.locator('//*[@id="DirectLink_7"]')
+        download = create_download(download_page, download_link)
+        save_download_storage(e_published_Date_converted, clean_text_new, download)
         download_page.close()
 
     if selected == "DirectLink_7":
-        with new_page.expect_download() as download_info:
-            download_link_cnt.click()
-        download = download_info.value
+        download = create_download(new_page, download_link_cnt)
 
-        download_dir_new = storage_manager.create_storage(
-            tender_uid=clean_text_new,
-            published_date=e_published_Date_converted,
-        )
-        custom_name = f"{clean_text_new}_{download.suggested_filename}"
-        if clean_text_new not in downlod_dict:
-            downlod_dict[clean_text_new] = str(download_dir_new / custom_name)
-        download.save_as(download_dir_new / custom_name)
-        time.sleep(1)
+        save_download_storage(e_published_Date_converted, clean_text_new, download)
 
     page.wait_for_timeout(ROW_WAIT_MS)
     new_page.close()
     return downlod_dict
+
+def save_download_storage(e_published_Date_converted, clean_text_new, download):
+    download_dir_new = storage_manager.create_storage(
+            tender_uid=clean_text_new,
+            published_date=e_published_Date_converted,
+        )
+    custom_name = f"{clean_text_new}_{download.suggested_filename}"
+    if clean_text_new not in downlod_dict:
+        downlod_dict[clean_text_new] = str(download_dir_new / custom_name)
+    download.save_as(download_dir_new / custom_name)
+    time.sleep(1)
+
+def create_download(new_page, download_link_cnt):
+    with new_page.expect_download() as download_info:
+        download_link_cnt.click()
+    download = download_info.value
+    return download

@@ -10,7 +10,24 @@
       "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\Balam\\\\OneDrive\\\\Documents\\\\Data_Engineering\\\\Project_Agentic_AI\\\\tender-intelligence-system\\\\ingestion_engine\" -Filter \"*.py\")",
       "Bash(Select-Object Name)",
       "Bash(pip install *)",
-      "Bash(.\\\\.venv\\\\Scripts\\\\python.exe -c \"from ingestion_engine.api.schemas import HealthResponse, QueryRequest, QueryResponse, TenderResponse, IngestResponse; print\\('schemas OK'\\)\")"
+      "Bash(.\\\\.venv\\\\Scripts\\\\python.exe -c \"from ingestion_engine.api.schemas import HealthResponse, QueryRequest, QueryResponse, TenderResponse, IngestResponse; print\\('schemas OK'\\)\")",
+      "PowerShell(pip install *)",
+      "PowerShell(python -m pip install pymupdf)",
+      "Bash(dir /s /b \"C:\\\\Users\\\\Balam\\\\OneDrive\\\\Documents\\\\trading_alert_online_App\\\\backend\\\\app\\\\*.py\")",
+      "Bash(.venv\\\\Scripts\\\\python.exe -c \"import app.main; print\\('imports OK'\\)\")",
+      "PowerShell(cd \"C:\\\\Users\\\\Balam\\\\OneDrive\\\\Documents\\\\trading_alert_online_App\\\\backend\"; Start-Process -NoNewWindow -FilePath \".venv\\\\Scripts\\\\uvicorn.exe\" -ArgumentList \"app.main:app\",\"--port\",\"8001\",\"--log-level\",\"warning\" -RedirectStandardOutput \"$env:TEMP\\\\uvicorn_out.txt\" -RedirectStandardError \"$env:TEMP\\\\uvicorn_err.txt\"; Start-Sleep 3; try { \\(Invoke-WebRequest -Uri \"http://localhost:8001/health\" -UseBasicParsing\\).Content } catch { \"Server not responding: $_\" })",
+      "Bash(gh pr *)",
+      "Bash(gh run *)",
+      "Bash(gh api *)",
+      "Bash(unzip -p /tmp/ci_logs.zip)",
+      "Bash(unzip -l /tmp/ci_logs.zip)",
+      "Bash(.venv\\\\Scripts\\\\uvicorn.exe ingestion_engine.api.app:app --host 0.0.0.0 --port 8000 --reload)",
+      "Bash(Read \"C:\\\\Users\\\\Balam\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-Balam-OneDrive-Documents-Data-Engineering-Project-Agentic-AI-tender-intelligence-system\\\\6456ba06-27d9-4178-bda4-693e8a951b6e\\\\tasks\\\\bds0yusg9.output\")",
+      "PowerShell(Invoke-RestMethod -Uri \"http://localhost:8000/health\" -Method GET -ErrorAction SilentlyContinue)",
+      "Bash(python -c ' *)",
+      "Bash(.venv\\\\Scripts\\\\python.exe -c \"import setuptools; print\\(setuptools.__version__\\)\")",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)"
     ]
   }
 }
