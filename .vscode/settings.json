@@ -1,7 +1,43 @@
 {
-  "editor.formatOnSave": true,
-  "editor.formatOnSaveMode": "file",
-  "editor.codeActionsOnSave": {
-    "source.organizeImports": "explicit"
+  // ---- Copilot ghost text off (all files) ----
+  "github.copilot.enable": {
+    "*": false
+  },
+  "editor.inlineSuggest.enabled": true,
+  // ---- Suppress autocomplete ONLY in Python ----
+  "[python]": {
+    "editor.quickSuggestions": {
+      "other": true,
+      "comments": true,
+      "strings": true
+    },
+    "editor.suggestOnTriggerCharacters": false,
+    "editor.parameterHints.enabled": true,
+    "editor.snippetSuggestions": "bottom"
+  },
+  // ---- Python language server: keep navigation, no auto-imports ----
+  "python.languageServer": "Pylance",
+  "python.analysis.autoImportCompletions": false,
+  // ---- HTML / Django templates: FULL autocomplete restored ----
+  "[html]": {
+    "editor.quickSuggestions": {
+      "other": true,
+      "comments": false,
+      "strings": true
+    },
+    "editor.suggestOnTriggerCharacters": true
+  },
+  "[django-html]": {
+    "editor.quickSuggestions": {
+      "other": true,
+      "comments": false,
+      "strings": true
+    },
+    "editor.suggestOnTriggerCharacters": true
+  },
+  "emmet.showSuggestionsAsSnippets": true,
+  "emmet.showExpandedAbbreviation": "always",
+  "emmet.includeLanguages": {
+    "django-html": "html"
   }
 }

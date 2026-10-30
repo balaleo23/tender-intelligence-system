@@ -27,7 +27,13 @@
       "Bash(python -c ' *)",
       "Bash(.venv\\\\Scripts\\\\python.exe -c \"import setuptools; print\\(setuptools.__version__\\)\")",
       "Bash(git add *)",
-      "Bash(git commit -m ' *)"
+      "Bash(git commit -m ' *)",
+      "Bash(.venv/Scripts/python -c \"import sys; print\\(sys.version\\); print\\(sys.prefix\\)\")",
+      "Bash(.venv/Scripts/python -m pip list)",
+      "Bash(.venv/Scripts/python -c ' *)",
+      "Bash(.venv/Scripts/python -c \"import ingestion_engine.api.app as a; print\\('app import OK'\\)\")",
+      "Bash(cd \"c:/Users/Balam/OneDrive/Documents/Data_Engineering_code/Project_Agentic_AI/tender-intelligence-system\" && grep -rn \"captcha_solver\\\\|CaptchaSolver\" --include=*.py . | grep -v \"^./.venv\" | head && echo \"=== playwright browsers ===\" && ls ~/AppData/Local/ms-playwright 2>/dev/null || echo \"no playwright browsers dir\")",
+      "Read(//c/Users/Balam/AppData/Local/ms-playwright/**)"
     ]
   }
 }
